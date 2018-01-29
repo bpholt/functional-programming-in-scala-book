@@ -26,7 +26,7 @@ class RngStateTest extends FlatSpec with Matchers {
   it should "return a non-negative integer" in {
     val rng = Simple(1059025964525L)
 
-    val (n, _) = nonNegativeInt(rng)
+    val (n, _) = nonNegativeInt.run(rng)
 
     n should be >= 0
   }
@@ -36,7 +36,7 @@ class RngStateTest extends FlatSpec with Matchers {
   it should "return a double between 0 and 1" in {
     val rng = Simple(42)
 
-    val (d, _) = double(rng)
+    val (d, _) = double.run(rng)
 
     d should (be >= 0.0 and be < 1.0)
   }
@@ -44,7 +44,7 @@ class RngStateTest extends FlatSpec with Matchers {
   "intDouble" should "return an int and a double" in {
     val rng = Simple(42)
 
-    val ((i: Int, d: Double), nextRng) = intDouble(rng)
+    val ((i: Int, d: Double), nextRng) = intDouble.run(rng)
 
     i should not be null.asInstanceOf[Int]
     d should (be >= 0.0 and be < 1.0)
@@ -54,7 +54,7 @@ class RngStateTest extends FlatSpec with Matchers {
   "doubleInt" should "return a double and an int" in {
     val rng = Simple(42)
 
-    val ((d: Double, i: Int), nextRng) = doubleInt(rng)
+    val ((d: Double, i: Int), nextRng) = doubleInt.run(rng)
 
     d should (be >= 0.0 and be < 1.0)
     i should not be null.asInstanceOf[Int]
@@ -75,7 +75,7 @@ class RngStateTest extends FlatSpec with Matchers {
   }
 
   "ints" should "return a list of n ints" in {
-    val (is, nextRng) = ints(3)(Simple(42L))
+    val (is, nextRng) = ints(3).run(Simple(42L))
 
     is should have length 3
     is.toSet.toList should have length 3
@@ -84,7 +84,7 @@ class RngStateTest extends FlatSpec with Matchers {
   }
 
   "nonNegativeLessThan" should "return an int between 0 and n" in {
-    val (i, rng) = nonNegativeLessThan(42)(Simple(42L))
+    val (i, rng) = nonNegativeLessThan(42).run(Simple(42L))
 
     i should (be < 42 and be >= 0)
     rng should be(Simple(1059025964525L))
