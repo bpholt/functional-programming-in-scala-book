@@ -3,7 +3,7 @@ package fpinscala.gettingstarted
 import scala.annotation.tailrec
 
 object ArrayIsSorted {
-  def isSorted[A](as: Array[A], ordered: (A, A) => Boolean): Boolean = {
+  def isSorted[A](as: Array[A])(ordered: (A, A) => Boolean): Boolean = {
     @tailrec
     def go(i: Int): Boolean = i match {
       case 0 => true
