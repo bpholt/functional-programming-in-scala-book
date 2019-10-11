@@ -4,12 +4,13 @@ import scala.annotation.tailrec
 
 object Fibonacci {
   def fib(n: Int): Int = {
-//    @tailrec
-    def go(n: Int): Int =
-      if (n == 0) 0
-      else if (n == 1) 1
-      else go(n - 1) + go(n - 2)
+    @tailrec
+    def go(i: Int, acc1: Int, acc2: Int): Int = i match {
+      case 0 => acc1
+      case 1 => acc2
+      case _ => go(i - 1, acc2, acc1 + acc2)
+    }
 
-    go(n)
+    go(n, 0, 1)
   }
 }
