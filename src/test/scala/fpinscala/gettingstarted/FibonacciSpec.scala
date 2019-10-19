@@ -27,4 +27,20 @@ class FibonacciSpec extends FlatSpec with Matchers {
     fib(5) should be(5)
   }
 
+  it should "return 102334155 for fib(40)" in {
+    fib(40) should be(102334155)
+  }
+
+  it should "return 1100087778366101931 for fib(88)" in {
+    fib(88) should be(1100087778366101931L)
+  }
+
+  it should "return 4660046610375530309 for fib(91)" in {
+    fib(91) should be(4660046610375530309L)
+  }
+
+  it should "return 7540113804746346429 for fib(92)" in {
+    fib(92) should be(7540113804746346429L)
+  }
+
 }
