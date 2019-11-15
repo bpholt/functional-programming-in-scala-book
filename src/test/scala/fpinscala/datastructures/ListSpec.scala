@@ -83,4 +83,24 @@ class ListSpec extends FlatSpec with Matchers {
     l should be(List(1, 2))
   }
 
+  behavior of "shortcircuitingFoldRight"
+
+  it should "fold to 0" in {
+    shortcircuitingFoldRight(List(0, 1), 1.0)(_ == 0)(_ * _) should be(0.0)
+    shortcircuitingFoldRight(List(1, 0), 1.0)(_ == 0)(_ * _) should be(0.0)
+  }
+
+  behavior of "foldRight"
+
+  it should "build a list when given Nil and Cons" in {
+    foldRight(List(1, 2, 3), nil[Int])(Cons(_, _)) should be(List(1, 2, 3))
+  }
+
+  behavior of "length"
+
+  it should "return the length of the list" in {
+    len(List(1, 2, 3)) should be(3)
+    len(nil[String]) should be (0)
+  }
+
 }

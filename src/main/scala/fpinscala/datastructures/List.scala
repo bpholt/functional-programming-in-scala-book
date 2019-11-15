@@ -7,6 +7,8 @@ case object Nil extends List[Nothing]
 case class Cons[+A](head: A, tail: List[A]) extends List[A]
 
 object List {
+  def nil[A]: List[A] = Nil
+
   def sum(ints: List[Int]): Int = ints match {
     case Nil => 0
     case Cons(x, xs) => x + sum(xs)
@@ -48,5 +50,24 @@ object List {
     case Cons(_, Nil) | Nil => Nil
     case Cons(h, t) => Cons(h, init(t))
   }
+
+  def foldRight[A, B](as: List[A], z: B)(f: (A, B) => B): B =
+    as match {
+      case Nil => z
+      case Cons(x, xs) => f(x, foldRight(xs, z)(f))
+    }
+
+  def sum2(ns: List[Int]): Int = foldRight(ns, 0)(_ + _)
+  def product2(ns: List[Double]): Double = foldRight(ns, 1.0)(_ * _)
+
+  def shortcircuitingFoldRight[A, B](as: List[A], z: B)(shortCircuit: A => Boolean)(f: (A, B) => B): B = as match {
+    case Nil => z
+    case Cons(x, _) if shortCircuit(x) => f(x, z)
+    case Cons(x, xs) =>
+      f(x, shortcircuitingFoldRight(xs, z)(shortCircuit)(f))
+  }
+
+  def len[A](as: List[A]): Int =
+    foldRight(as, 0)((_, b) => b + 1)
 
 }
