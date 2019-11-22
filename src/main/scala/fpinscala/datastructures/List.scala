@@ -70,4 +70,17 @@ object List {
   def len[A](as: List[A]): Int =
     foldRight(as, 0)((_, b) => b + 1)
 
+  @tailrec
+  def foldLeft[A, B](as: List[A], z: B)(f: (B, A) => B): B =
+    as match {
+      case Nil => z
+      case Cons(h, t) => foldLeft(t, f(z, h))(f)
+    }
+
+  def sumLeft(as: List[Int]): Int = foldLeft(as, 0)(_ + _)
+  def productLeft(as: List[Double]): Double = foldLeft(as, 1.0)(_ * _)
+  def lenLeft[A](as: List[A]): Int = foldLeft(as, 0)((i, _) => i + 1)
+
+  def reverse[A](as: List[A]): List[A] = foldLeft(as, nil[A])((b, a) => Cons(a, b))
+
 }
