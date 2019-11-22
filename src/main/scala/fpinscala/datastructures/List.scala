@@ -83,4 +83,12 @@ object List {
 
   def reverse[A](as: List[A]): List[A] = foldLeft(as, nil[A])((b, a) => Cons(a, b))
 
+  def foldRightViaFoldLeft[A, B](as: List[A], z: B)(f: (A, B) => B): B =
+    foldLeft(reverse(as), z)((b, a) => f(a, b))
+
+  // this is kind of cheating since reverse uses foldLeft. I think we need to be able
+  // to concatenate lists to make it really work
+  def foldLeftViaFoldRight[A, B](as: List[A], z: B)(f: (B, A) => B): B =
+    foldRight(reverse(as), z)((a, b) => f(b, a))
+
 }

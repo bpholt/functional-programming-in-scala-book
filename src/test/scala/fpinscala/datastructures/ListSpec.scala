@@ -102,9 +102,9 @@ class ListSpec extends FlatSpec with Matchers {
     shortcircuitingFoldRight(List(1, 0), 1.0)(_ == 0)(_ * _) should be(0.0)
   }
 
-  behavior of "foldRight"
-
   private def listOfLength(i: Int): List[Int] = (0 until i).foldRight(nil[Int])(Cons(_, _))
+
+  behavior of "foldRight"
 
   it should "fold a list using +" in {
     foldRight(listOfLength(10), 0)(_ + _) should be(45)
@@ -161,6 +161,34 @@ class ListSpec extends FlatSpec with Matchers {
 
   it should "reverse the list" in {
     reverse(List(1, 2, 3)) should be(List(3, 2, 1))
+  }
+
+  behavior of "foldRightViaFoldLeft"
+
+  it should "fold a list using +" in {
+    foldRightViaFoldLeft(listOfLength(10), 0)(_ + _) should be(45)
+  }
+
+  it should "build a list when given Nil and Cons" in {
+    foldRightViaFoldLeft(List(1, 2, 3), nil[Int])(Cons(_, _)) should be(List(1, 2, 3))
+  }
+
+  it should "not blow up on large lists" in {
+    foldRightViaFoldLeft(listOfLength(10000), 0)(_ + _) should be(49995000)
+  }
+
+  behavior of "foldLeftViaFoldRight"
+
+  it should "fold a list using +" in {
+    foldLeftViaFoldRight(listOfLength(10), 0)(_ + _) should be(45)
+  }
+
+  it should "build a list when given Nil and Cons" in {
+    foldLeftViaFoldRight(List(1, 2, 3), nil[Int])((b, a) => Cons(a, b)) should be(List(3, 2, 1))
+  }
+
+  it should "not blow up on large lists" in {
+    a[StackOverflowError] should be thrownBy foldLeftViaFoldRight(listOfLength(10000), 0)(_ + _)
   }
 
 }
