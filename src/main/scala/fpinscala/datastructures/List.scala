@@ -91,4 +91,9 @@ object List {
   def foldLeftViaFoldRight[A, B](as: List[A], z: B)(f: (B, A) => B): B =
     foldRight(reverse(as), z)((a, b) => f(b, a))
 
+  def append[A](as: List[A], bs: List[A]): List[A] =
+    foldLeft(reverse(as), bs) { (l, e) => Cons(e, l) }
+
+  def flatten[A](lists: List[List[A]]): List[A] =
+    foldLeft(lists, nil[A])(append)
 }

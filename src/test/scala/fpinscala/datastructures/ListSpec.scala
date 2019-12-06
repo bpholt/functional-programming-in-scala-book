@@ -191,4 +191,24 @@ class ListSpec extends FlatSpec with Matchers {
     a[StackOverflowError] should be thrownBy foldLeftViaFoldRight(listOfLength(10000), 0)(_ + _)
   }
 
+  behavior of "append"
+
+  it should "append two lists in order" in {
+    append(List(1, 2, 3), List(4, 5, 6)) should be(List(1, 2, 3, 4, 5, 6))
+  }
+
+  it should "handle Nil on the left" in {
+    append(nil[Int], List(1, 2, 3)) should be(List(1, 2, 3))
+  }
+
+  it should "handle Nil on the right" in {
+    append(List(1, 2, 3), nil[Int]) should be(List(1, 2, 3))
+  }
+
+  behavior of "flatten"
+
+  it should "flatten the lists" in {
+    flatten(List(List(1, 2, 3), List(4, 5, 6))) should be(List(1, 2, 3, 4, 5, 6))
+  }
+
 }
