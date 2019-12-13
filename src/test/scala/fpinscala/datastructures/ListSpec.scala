@@ -211,4 +211,25 @@ class ListSpec extends FlatSpec with Matchers {
     flatten(List(List(1, 2, 3), List(4, 5, 6))) should be(List(1, 2, 3, 4, 5, 6))
   }
 
+  behavior of "mapPlus1"
+
+  it should "increment the numbers" in {
+    mapPlus1(List(1, 2, 3)) should be (List(2, 3, 4))
+  }
+
+  behavior of "doublesToStrings"
+
+  it should "convert the doubles to strings" in {
+    doublesToStrings(List(1.0, 2.0, 3.14)) should be(List("1.0", "2.0", "3.14"))
+  }
+
+  behavior of "map"
+
+  it should "increment numbers" in {
+    map(List(1, 2, 3))(_ + 1) should be(List(2, 3, 4))
+  }
+
+  it should "convert doubles to strings" in {
+    map(List(1.0, 2.0, 3.14))(_.toString) should be(List("1.0", "2.0", "3.14"))
+  }
 }

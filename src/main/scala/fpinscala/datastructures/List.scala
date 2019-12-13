@@ -94,4 +94,13 @@ object List {
 
   def flatten[A](lists: List[List[A]]): List[A] =
     foldLeft(lists, nil[A])(append)
+
+  def mapPlus1(ints: List[Int]): List[Int] =
+    foldRight(ints, nil[Int])((a, b) => Cons(a + 1, b))
+
+  def doublesToStrings(ds: List[Double]): List[String] =
+    foldRight(ds, nil[String])((a, b) => Cons(a.toString, b))
+
+  def map[A,B](as: List[A])(f: A => B): List[B] =
+    foldRight(as, nil[B])((a, b) => Cons(f(a), b))
 }
