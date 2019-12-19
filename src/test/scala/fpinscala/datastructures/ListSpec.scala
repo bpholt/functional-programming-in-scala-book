@@ -1,9 +1,10 @@
 package fpinscala.datastructures
 
 import fpinscala.datastructures.List._
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class ListSpec extends FlatSpec with Matchers {
+class ListSpec extends AnyFlatSpec with Matchers {
 
   behavior of "stdlib foldLeft"
 

@@ -1,9 +1,10 @@
 package fpinscala.gettingstarted
 
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import Fibonacci._
 
-class FibonacciSpec extends FlatSpec with Matchers {
+class FibonacciSpec extends AnyFlatSpec with Matchers {
 
   behavior of "fib function"
 

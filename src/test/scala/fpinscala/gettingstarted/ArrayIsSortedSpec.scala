@@ -1,8 +1,9 @@
 package fpinscala.gettingstarted
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class ArrayIsSortedSpec extends FlatSpec with Matchers {
+class ArrayIsSortedSpec extends AnyFlatSpec with Matchers {
 
   behavior of "isSorted"
 
