@@ -233,4 +233,44 @@ class ListSpec extends AnyFlatSpec with Matchers {
   it should "convert doubles to strings" in {
     map(List(1.0, 2.0, 3.14))(_.toString) should be(List("1.0", "2.0", "3.14"))
   }
+
+  behavior of "filter"
+
+  it should "remove odd numbers from the list" in {
+    filter(List(1, 2, 3, 4))(_ % 2 == 0) should be(List(2, 4))
+  }
+
+  it should "remove even numbers from the list" in {
+    filter(List(1, 2, 3, 4))(_ % 2 == 1) should be(List(1, 3))
+  }
+
+  it should "handle empty lists" in {
+    filter(nil[Int])(_ % 2 == 0) should be(nil[Int])
+  }
+
+  behavior of "flatMap"
+
+  it should "work like map.flatten" in {
+    val input = List(1, 2, 3)
+
+    val mapped = map(input)(List(_))
+    mapped should be(List(List(1), List(2), List(3)))
+
+    flatten(mapped) should be(flatMap(input)(List(_)))
+  }
+
+  behavior of "filterWithFlatMap"
+
+  it should "remove odd numbers from the list" in {
+    filterWithFlatMap(List(1, 2, 3, 4))(_ % 2 == 0) should be(List(2, 4))
+  }
+
+  it should "remove even numbers from the list" in {
+    filterWithFlatMap(List(1, 2, 3, 4))(_ % 2 == 1) should be(List(1, 3))
+  }
+
+  it should "handle empty lists" in {
+    filterWithFlatMap(nil[Int])(_ % 2 == 0) should be(nil[Int])
+  }
+
 }
