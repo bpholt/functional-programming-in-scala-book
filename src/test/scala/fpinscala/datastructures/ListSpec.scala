@@ -273,4 +273,47 @@ class ListSpec extends AnyFlatSpec with Matchers {
     filterWithFlatMap(nil[Int])(_ % 2 == 0) should be(nil[Int])
   }
 
+  behavior of "zipAdd"
+
+  it should "add the corresponding elements of two lists of integers" in {
+    zipAdd(List(1, 2, 3), List(4, 5, 6)) should be(List(5, 7, 9))
+  }
+
+  it should "drop treat missing elements" in {
+    zipAdd(List(1, 2, 3), List(4, 5)) should be (List(5, 7))
+    zipAdd(List(1, 2), List(4, 5, 6)) should be (List(5, 7))
+  }
+
+  behavior of "zipWith"
+
+  it should "add the corresponding elements of two lists of integers" in {
+    zipWith(List(1, 2, 3), List(4, 5, 6))(_ + _) should be(List(5, 7, 9))
+  }
+
+  it should "drop treat missing elements" in {
+    zipWith(List(1, 2, 3), List(4, 5))(_ + _) should be (List(5, 7))
+    zipWith(List(1, 2), List(4, 5, 6))(_ + _) should be (List(5, 7))
+  }
+
+  behavior of "hasSubsequence"
+
+  it should "work using the book's examples" in {
+    val input = List(1,2,3,4)
+    hasSubsequence(input, List(1,2)) should be(true)
+    hasSubsequence(input, List(2,3)) should be(true)
+    hasSubsequence(input, List(4)) should be(true)
+  }
+
+  it should "work using some other examples" in {
+    val input = List(1,2,3,4)
+    hasSubsequence(input, List(42)) should be(false)
+    hasSubsequence(input, List(4, 3)) should be(false)
+    hasSubsequence(input, nil) should be(true)
+  }
+
+  it should "not include gaps" in {
+    hasSubsequence(List(1, 2, 3, 4), List(1, 3)) should be(false)
+    hasSubsequence(List(1, 2, 3, 4), List(2, 4)) should be(false)
+  }
+
 }
