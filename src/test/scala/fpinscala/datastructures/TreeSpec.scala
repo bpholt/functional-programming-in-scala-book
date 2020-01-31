@@ -8,6 +8,7 @@ class TreeSpec extends AnyFlatSpec with Matchers {
   behavior of "a Tree"
 
   it should "use Tree.size to calculate the size of the tree" in {
+    Tree.size(Leaf(42)) should be(1)
     Tree.size(Branch(Leaf(1), Leaf(2))) should be(3)
     Tree.size(Branch(Leaf(1), Branch(Leaf(2), Leaf(3)))) should be(5)
   }
