@@ -3,10 +3,12 @@ package fpinscala.laziness
 import scala.annotation.tailrec
 
 sealed trait Stream[+A] {
-  def headOption: Option[A] = this match {
-    case Empty => None
-    case Cons(h, _) => Some(h())
-  }
+  def headOption: Option[A] =
+    this match {
+      case Empty => None
+      case Cons(h, _) => Some(h())
+    }
+//    foldRight()
 
   def toList: List[A] = this match {
     case Empty => List.empty[A]
@@ -25,7 +27,14 @@ sealed trait Stream[+A] {
     case Cons(_, _) if n <= 0 => this
   }
 
-  def takeWhile(p: A => Boolean): Stream[A] = ???
+  def takeWhile(p: A => Boolean): Stream[A] =
+//    this match {
+//      case Cons(h, t) if p(h()) => Cons(h, () => t().takeWhile(p))
+//      case _ => Empty
+//    }
+    foldRight(Stream.empty[A]) { (a, b) =>
+      if(p(a)) Stream.cons(a, b) else Empty
+    }
 
   def foldRight[B](z: => B)(f: (A, => B) => B): B =
     this match {
@@ -36,7 +45,12 @@ sealed trait Stream[+A] {
   def exists(p: A => Boolean): Boolean =
     foldRight(false)((a, b) => p(a) || b)
 
-  def forAll(p: A => Boolean): Boolean = ???
+  def forAll(p: A => Boolean): Boolean =
+//    this match {
+//      case Cons(h, t) => p(h()) && t().forAll(p)
+//      case Empty => true
+//    }
+    foldRight(true)((a, b) => p(a) && b)
 
   def map[B](f: A => B): Stream[B] = ???
   def filter(pred: A => Boolean): Stream[A] = ???
