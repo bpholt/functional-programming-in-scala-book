@@ -11,9 +11,9 @@ class StateSpec extends AnyFlatSpec with Matchers {
   val thirdInt: Int = -340305902
   val fourthInt: Int = -2015756020
   val fifthInt: Int = 1770001318
-  val firstDouble: Double = 0.007524831689672932
-  val secondDouble: Double = 0.824221092660083
-  val thirdDouble: Double = 0.47307205967282506
+  val firstDouble: Double = 0.007524831686168909
+  val secondDouble: Double = 0.8242210922762752
+  val thirdDouble: Double = 0.4730720594525337
 
   behavior of "SimpleRNG"
 
@@ -57,7 +57,7 @@ class StateSpec extends AnyFlatSpec with Matchers {
       override def nextInt: (Int, RNG) = (Int.MaxValue, SimpleRNG(42L))
     })
 
-    output should be(firstDouble)
+    output should be(0.9999999995343387)
   }
 
   behavior of "intDouble"
@@ -66,7 +66,7 @@ class StateSpec extends AnyFlatSpec with Matchers {
     val ((i, d), _) = RNG.intDouble(rng)
 
     i should be(firstInt)
-    d should be(secondDouble)
+    d should be(0.8242210922762752)
   }
 
   behavior of "doubleInt"
@@ -74,7 +74,7 @@ class StateSpec extends AnyFlatSpec with Matchers {
   it should "return an int and a double" in {
     val ((d, i), _) = RNG.doubleInt(rng)
 
-    d should be(firstDouble)
+    d should be(0.007524831686168909)
     i should be(secondInt)
   }
 
