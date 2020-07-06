@@ -23,31 +23,32 @@ object RNG {
   }
 
   def double: Rand[Double] =
-    rng => {
-      val (i, r) = nonNegativeInt(rng)
-      (i / (Int.MaxValue.toDouble + 1), r)
-    }
+    map(nonNegativeInt)(i => i / (Int.MaxValue.toDouble + 1))
+//    rng => {
+//      val (i, r) = nonNegativeInt(rng)
+//      (i / (Int.MaxValue.toDouble + 1), r)
+//    }
 /*
     map(nonNegativeInt)(i => i / (Int.MaxValue.toDouble + 1))
 */
 
   def intDouble: Rand[(Int, Double)] =
-    rng => {
-      val (i, r) = rng.nextInt
-      val (d, r2) = double(r)
-
-      ((i, d), r2)
-    }
-//    both(int, double)
+//    rng => {
+//      val (i, r) = rng.nextInt
+//      val (d, r2) = double(r)
+//
+//      ((i, d), r2)
+//    }
+    both(int, double)
 
   def doubleInt: Rand[(Double, Int)] =
-    rng => {
-      val (d, r) = double(rng)
-      val (i, r2) = r.nextInt
-
-      ((d, i), r2)
-    }
-//  both(double, int)
+//    rng => {
+//      val (d, r) = double(rng)
+//      val (i, r2) = r.nextInt
+//
+//      ((d, i), r2)
+//    }
+  both(double, int)
 
   def double3: Rand[(Double, Double, Double)] = rng => {
     val (d1, r1) = double(rng)
@@ -70,15 +71,16 @@ object RNG {
   }
 */
   def ints(count: Int): Rand[List[Int]] =
-  rng => {
-    val (li, lr) = LazyList
-      .unfold(rng)(r => Option(r.nextInt).map(t => (t, t._2)))
-      .take(count)
-      .toList
-      .unzip
-
-    (li, lr.last)
-  }
+//  rng => {
+//    val (li, lr) = LazyList
+//      .unfold(rng)(r => Option(r.nextInt).map(t => (t, t._2)))
+//      .take(count)
+//      .toList
+//      .unzip
+//
+//    (li, lr.last)
+//  }
+  sequence(List.fill(count)(int))
 /*
     sequence(List.fill(count)(int))
 */
@@ -97,8 +99,16 @@ object RNG {
 
   def nonNegativeEven: Rand[Int] = map(nonNegativeInt)(i => i - i % 2)
 
+  def both[A, B](ra: Rand[A], rb: Rand[B]): Rand[(A, B)] =
+    map2(ra, rb)((_, _))
+
   def map2[A, B, C](ra: Rand[A], rb: Rand[B])
-                   (f: (A, B) => C): Rand[C] = ???
+                   (f: (A, B) => C): Rand[C] = rng => {
+    val (a, r1) = ra(rng)
+    val (b, r2) = rb(r1)
+
+    (f(a, b), r2)
+  }
 /*
     rng => {
       val (a, r1) = ra(rng)
@@ -108,10 +118,44 @@ object RNG {
     }
 */
 
-  def both[A, B](ra: Rand[A], rb: Rand[B]): Rand[(A, B)] =
-    map2(ra, rb)((_, _))
+  def sequence[A](fs: LazyList[Rand[A]]): Rand[LazyList[A]] =
+    fs.foldRight(unit(LazyList.empty[A]))(map2(_, _)(_ #:: _))
 
-  def sequence[A](fs: List[Rand[A]]): Rand[List[A]] = ???
+  def sequence[A](fs: List[Rand[A]]): Rand[List[A]] = {
+//   def foldRight[B](z: B)(op: (A, B) => B): B
+
+//    fs.foldRight[Rand[List[A]]](unit(List.empty[A])) { case (ra: Rand[A], ras: Rand[List[A]]) =>
+//      map2(ra, ras)(_ :: _)
+//    }
+    fs.foldRight(unit(List.empty[A]))(map2(_, _)(_ :: _))
+    // def foldLeft[B](z: B)(op: (B, A) => B): B
+//    fs.foldLeft[Rand[List[A]]](unit(List.empty[A])) { case (ras: Rand[List[A]], ra: Rand[A]) =>
+////      map2(ra, ras)(_ :: _)
+//      map2(ras, ra)((as, a) => a :: as)
+//    }
+
+//    fs match {
+//      case Nil => // unit(List.empty[A])
+//         rng => (List.empty[A], rng)
+//
+// foldRight:
+//      case (h: Rand[A]) :: (t: List[Rand[A]]) =>
+//        rng => {
+//          val (a: A, r1) = h(rng)
+//          val (as: List[A], r2) = sequence(t)(r1)
+//
+//          (a :: as, r2)
+//        }
+// foldLeft:
+//      case (h: Rand[A]) :: (t: List[Rand[A]]) =>
+//        rng => {
+//          val (as: List[A], r1) = sequence(t)(rng)
+//          val (a: A, r2) = h(r1)
+//
+//          (a :: as, r2)
+//        }
+//    }
+  }
 /*
     fs.foldRight(unit(List.empty[A]))(map2(_, _)(_ :: _))
 */
