@@ -102,4 +102,27 @@ class StateSpec extends AnyFlatSpec with Matchers {
 
     nextInt should be(fourthInt)
   }
+
+  behavior of "nonNegativeLessThan"
+
+  it should "return a non-negative number less than the given argument" in {
+    // this seed will result in a nextInt that should cause nonNegativeLessThan to recurse once when called with 17
+    val seed = 140737488196451L
+    val particularRNG = SimpleRNG(seed)
+
+    val boundary = 17
+    val (i, r) = RNG.nonNegativeLessThan(boundary)(particularRNG)
+    val (nextInt, _) = r.nextInt
+
+    i should (be < boundary and be >= 0)
+    nextInt shouldEqual particularRNG.nextInt._2.nextInt._1
+  }
+
+  behavior of "rollDie"
+
+  it should "not return 0 when initialized with the known buggy seed" in {
+    val (i, _) = RNG.rollDie(SimpleRNG(5))
+
+    i should (be >= 1 and be <= 6)
+  }
 }
