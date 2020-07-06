@@ -1,6 +1,33 @@
 package fpinscala.state
 
 case class State[S, +A](run: S => (A, S)) {
+  def map[B](f: A => B): State[S, B] =
+    flatMap(a => State.unit(f(a)))
+
+  def flatMap[B](f: A => State[S, B]): State[S, B] = State { s =>
+    val (a, s1) = run(s)
+    f(a).run(s1)
+  }
+
+  def map2[B, C](bs: State[S, B])
+                (f: (A, B) => C): State[S, C] =
+    State.map2(this, bs)(f)
+}
+
+object State {
+  def unit[S, A](a: A): State[S, A] = State((a, _))
+  def map2[S, A, B, C](as: State[S, A], bs: State[S, B])
+                      (f: (A, B) => C): State[S, C] =
+    for {
+      a <- as
+      b <- bs
+    } yield f(a, b)
+
+  def sequence[S, A](fs: List[State[S, A]]): State[S, List[A]] =
+    fs.foldRight[State[S, List[A]]](unit(List.empty[A]))(map2(_, _)(_ :: _))
+
+  def sequence[S, A](fs: LazyList[State[S, A]]): State[S, LazyList[A]] =
+    fs.foldRight[State[S, LazyList[A]]](unit(LazyList.empty[A]))(map2(_, _)(_ #:: _))
 
 }
 
@@ -42,7 +69,10 @@ object RNG {
   type Rand[+A] = State[RNG, A]
 
   def unit[A](a: A): Rand[A] =
+/*
     State((a, _))
+*/
+    State.unit(a)
 
   def map[A, B](s: Rand[A])
                (f: A => B): Rand[B] =
@@ -50,7 +80,10 @@ object RNG {
 //      val (a, rng2) = s(rng)
 //      (f(a), rng2)
 //    }
+/*
     flatMap(s)(a => unit(f(a)))
+*/
+    s.map(f)
 
   def nonNegativeEven: Rand[Int] = map(nonNegativeInt)(i => i - i % 2)
 
@@ -65,13 +98,16 @@ object RNG {
 //
 //      (f(a, b), r2)
 //    }
-    flatMap(ra)(a => flatMap(rb)(b => unit(f(a, b))))
+    /*flatMap(ra)(a => flatMap(rb)(b => unit(f(a, b))))*/
+    State.map2(ra, rb)(f)
 
   def sequence[A](fs: LazyList[Rand[A]]): Rand[LazyList[A]] =
-    fs.foldRight(unit(LazyList.empty[A]))(map2(_, _)(_ #:: _))
+//    fs.foldRight(unit(LazyList.empty[A]))(map2(_, _)(_ #:: _))
+    State.sequence(fs)
 
   def sequence[A](fs: List[Rand[A]]): Rand[List[A]] =
-    fs.foldRight(unit(List.empty[A]))(map2(_, _)(_ :: _))
+//    fs.foldRight(unit(List.empty[A]))(map2(_, _)(_ :: _))
+    State.sequence(fs)
 
   def nonNegativeLessThan(n: Int): Rand[Int] =
 //    rng => {
@@ -86,11 +122,12 @@ object RNG {
       else nonNegativeLessThan(n)
     }
 
-  def flatMap[A, B](f: Rand[A])(g: A => Rand[B]): Rand[B] = State { rng =>
-    val (a, r) = f.run(rng)
-    g(a).run(r)
-  }
-
+  def flatMap[A, B](f: Rand[A])(g: A => Rand[B]): Rand[B] =
+//    State { rng =>
+//      val (a, r) = f.run(rng)
+//      g(a).run(r)
+//    }
+    f flatMap g
 }
 
 case class SimpleRNG(seed: Long) extends RNG {
