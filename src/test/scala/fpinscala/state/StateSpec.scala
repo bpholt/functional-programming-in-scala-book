@@ -31,13 +31,13 @@ class StateSpec extends AnyFlatSpec with Matchers {
   it should "return a non-negative integer" in {
     val (_, rng) = SimpleRNG(42L).nextInt
 
-    val (output, _) = RNG.nonNegativeInt(rng)
+    val (output, _) = RNG.nonNegativeInt.run(rng)
 
     output should be (fifthInt)
   }
 
   it should "handle the Int.MinValue corner case" in {
-    val (output, _) = RNG.nonNegativeInt(new RNG {
+    val (output, _) = RNG.nonNegativeInt.run(new RNG {
       override def nextInt: (Int, RNG) = (Int.MinValue, SimpleRNG(42L))
     })
 
@@ -47,13 +47,13 @@ class StateSpec extends AnyFlatSpec with Matchers {
   behavior of "double"
 
   it should "return a double between 0 and 1" in{
-    val (output, _) = RNG.double(rng)
+    val (output, _) = RNG.double.run(rng)
 
     output should be(firstDouble)
   }
 
   it should "handle the Int.MaxValue corner case" in {
-    val (output, _) = RNG.double(new RNG {
+    val (output, _) = RNG.double.run(new RNG {
       override def nextInt: (Int, RNG) = (Int.MaxValue, SimpleRNG(42L))
     })
 
@@ -63,7 +63,7 @@ class StateSpec extends AnyFlatSpec with Matchers {
   behavior of "intDouble"
 
   it should "return an int and a double" in {
-    val ((i, d), _) = RNG.intDouble(rng)
+    val ((i, d), _) = RNG.intDouble.run(rng)
 
     i should be(firstInt)
     d should be(0.8242210922762752)
@@ -72,7 +72,7 @@ class StateSpec extends AnyFlatSpec with Matchers {
   behavior of "doubleInt"
 
   it should "return an int and a double" in {
-    val ((d, i), _) = RNG.doubleInt(rng)
+    val ((d, i), _) = RNG.doubleInt.run(rng)
 
     d should be(0.007524831686168909)
     i should be(secondInt)
@@ -81,7 +81,7 @@ class StateSpec extends AnyFlatSpec with Matchers {
   behavior of "double3"
 
   it should "return 3 doubles" in {
-    val ((d1, d2, d3), _) = RNG.double3(rng)
+    val ((d1, d2, d3), _) = RNG.double3.run(rng)
 
     d1 should be(firstDouble)
     d2 should be(secondDouble)
@@ -91,13 +91,13 @@ class StateSpec extends AnyFlatSpec with Matchers {
   behavior of "ints"
 
   it should "return the given number of ints" in {
-    val (output, _) = RNG.ints(3)(rng)
+    val (output, _) = RNG.ints(3).run(rng)
 
     output should be(List(firstInt, secondInt, thirdInt))
   }
 
   it should "return an RNG in the correct state" in {
-    val (_, output) = RNG.ints(3)(rng)
+    val (_, output) = RNG.ints(3).run(rng)
     val (nextInt, _) = output.nextInt
 
     nextInt should be(fourthInt)
@@ -111,7 +111,7 @@ class StateSpec extends AnyFlatSpec with Matchers {
     val particularRNG = SimpleRNG(seed)
 
     val boundary = 17
-    val (i, r) = RNG.nonNegativeLessThan(boundary)(particularRNG)
+    val (i, r) = RNG.nonNegativeLessThan(boundary).run(particularRNG)
     val (nextInt, _) = r.nextInt
 
     i should (be < boundary and be >= 0)
@@ -121,7 +121,7 @@ class StateSpec extends AnyFlatSpec with Matchers {
   behavior of "rollDie"
 
   it should "not return 0 when initialized with the known buggy seed" in {
-    val (i, _) = RNG.rollDie(SimpleRNG(5))
+    val (i, _) = RNG.rollDie.run(SimpleRNG(5))
 
     i should (be >= 1 and be <= 6)
   }

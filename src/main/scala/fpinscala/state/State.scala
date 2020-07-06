@@ -1,18 +1,22 @@
 package fpinscala.state
 
+case class State[S, +A](run: S => (A, S)) {
+
+}
+
 trait RNG {
   def nextInt: (Int, RNG)
 }
 
 object RNG {
-  val int: Rand[Int] = _.nextInt
+  val int: Rand[Int] = State(_.nextInt)
 
   def rollDie: Rand[Int] = map(nonNegativeLessThan(6))(_ + 1)
 
-  def nonNegativeInt: Rand[Int] = rng => {
+  def nonNegativeInt: Rand[Int] = State { rng =>
     val (i, r) = rng.nextInt
 
-    if (i < 0) nonNegativeInt(r) else (i, r)
+    if (i < 0) nonNegativeInt.run(r) else (i, r)
   }
 
   def double: Rand[Double] =
@@ -24,10 +28,10 @@ object RNG {
   def doubleInt: Rand[(Double, Int)] =
   both(double, int)
 
-  def double3: Rand[(Double, Double, Double)] = rng => {
-    val (d1, r1) = double(rng)
-    val (d2, r2) = double(r1)
-    val (d3, r3) = double(r2)
+  def double3: Rand[(Double, Double, Double)] = State { rng =>
+    val (d1, r1) = double.run(rng)
+    val (d2, r2) = double.run(r1)
+    val (d3, r3) = double.run(r2)
 
     ((d1, d2, d3), r3)
   }
@@ -35,10 +39,10 @@ object RNG {
   def ints(count: Int): Rand[List[Int]] =
   sequence(List.fill(count)(int))
 
-  type Rand[+A] = RNG => (A, RNG)
+  type Rand[+A] = State[RNG, A]
 
   def unit[A](a: A): Rand[A] =
-    (a, _)
+    State((a, _))
 
   def map[A, B](s: Rand[A])
                (f: A => B): Rand[B] =
@@ -82,9 +86,9 @@ object RNG {
       else nonNegativeLessThan(n)
     }
 
-  def flatMap[A, B](f: Rand[A])(g: A => Rand[B]): Rand[B] = rng => {
-    val (a, r) = f(rng)
-    g(a)(r)
+  def flatMap[A, B](f: Rand[A])(g: A => Rand[B]): Rand[B] = State { rng =>
+    val (a, r) = f.run(rng)
+    g(a).run(r)
   }
 
 }
