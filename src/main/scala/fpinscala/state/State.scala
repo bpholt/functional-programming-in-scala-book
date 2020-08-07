@@ -29,6 +29,16 @@ object State {
   def sequence[S, A](fs: LazyList[State[S, A]]): State[S, LazyList[A]] =
     fs.foldRight[State[S, LazyList[A]]](unit(LazyList.empty[A]))(map2(_, _)(_ #:: _))
 
+  def modify[S](f: S => S): State[S, Unit] =
+    for {
+      s <- get
+      _ <- set(f(s))
+    } yield ()
+
+  def get[S]: State[S, S] = State(s => (s, s))
+
+  def set[S](s: S): State[S, Unit] = State(_ => ((), s))
+
 }
 
 trait RNG {
