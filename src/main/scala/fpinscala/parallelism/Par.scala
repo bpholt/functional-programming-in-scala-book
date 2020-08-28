@@ -1,6 +1,7 @@
 package fpinscala.parallelism
 
 import java.util.concurrent._
+import java.util.concurrent.atomic.AtomicReference
 
 /* Definitions from java.util.concurrent._:
 
@@ -17,63 +18,73 @@ import java.util.concurrent._
       }
  */
 
-sealed trait Par[A]
-case class CompletedPar[A](a: A) extends Par[A]
-case class UnevalPar[A](fa: ExecutorService => A) extends Par[A]
+sealed trait Future[+A] {
+  private[parallelism] def apply(cb: A => Unit): Unit
+}
 
 object Par {
-  def unit[A](a: A): Par[A] = CompletedPar(a)
+  type Par[+A] = ExecutorService => Future[A]
 
-  def map2[A, B, C](pa: Par[A], pb: Par[B])
-                   (f: (A, B) => C): Par[C] = {
-    (pa, pb) match {
-      case (CompletedPar(a), CompletedPar(b)) => unit(f(a,b))
-      case (UnevalPar(fa), CompletedPar(b)) => UnevalPar(service => {
-        val futureA = service.submit(new Callable[A] {
-          override def call: A = fa(service)
-        })
-
-        f(futureA.get, b)
-      })
-
-      case (CompletedPar(a), UnevalPar(fb)) => UnevalPar(service => {
-        val futureB = service.submit(new Callable[B] {
-          override def call: B = fb(service)
-        })
-
-        f(a, futureB.get)
-      })
-
-      case (UnevalPar(fa), UnevalPar(fb)) => UnevalPar(service => {
-        val futureA = service.submit(new Callable[A] {
-          override def call: A = fa(service)
-        })
-
-        val futureB = service.submit(new Callable[B] {
-          override def call: B = fb(service)
-        })
-
-        f(futureA.get, futureB.get)
-      })
-    }
+  def unit[A](a: A): Par[A] = _ => new Future[A] {
+    override private[parallelism] def apply(cb: A => Unit): Unit =
+      cb(a)
   }
 
-  def fork[A](a: => Par[A]): Par[A] = UnevalPar(s => run(s)(a))
+  def map2[A, B, C](pa: Par[A], pb: Par[B])
+                   (f: (A, B) => C): Par[C] = es =>
+    new Future[C] {
+      override private[parallelism] def apply(cb: C => Unit): Unit = {
+        var ar: Option[A] = None
+        var br: Option[B] = None
+
+        val combiner = Actor[Either[A, B]](es) {
+          case Left(a) =>
+            br match {
+              case None => ar = Some(a)
+              case Some(b) => eval(es)(cb(f(a, b)))
+            }
+          case Right(b) =>
+            ar match {
+              case None => br = Some(b)
+              case Some(a) => eval(es)(cb(f(a, b)))
+            }
+        }
+
+        pa(es)(a => combiner ! Left(a))
+        pb(es)(b => combiner ! Right(b))
+      }
+    }
+
+  def fork[A](a: => Par[A]): Par[A] = es =>
+    new Future[A] {
+      override private[parallelism] def apply(cb: A => Unit): Unit =
+        eval(es)(a(es)(cb))
+    }
+
+  def eval(es: ExecutorService)(r: => Unit): Unit = {
+    es.submit(new Callable[Unit] { def call: Unit = r })
+
+    ()
+  }
 
   def lazyUnit[A](a: => A): Par[A] = fork(unit(a))
 
-  def run[A](s: ExecutorService)(a: Par[A]): A =
-    a match {
-      case CompletedPar(a) => a
-      case UnevalPar(fa) => fa(s)
+  def run[A](es: ExecutorService)
+            (p: Par[A]): A = {
+    val ref = new AtomicReference[A]()
+    val latch = new CountDownLatch(1)
+
+    p(es) { a =>
+      ref.set(a)
+      latch.countDown()
     }
+
+    latch.await()
+    ref.get
+  }
 
   def asyncF[A, B](f: A => B): A => Par[B] =
     (a: A) => lazyUnit(f(a))
-/*
-    a =>
-    map(lazyUnit(a))(f)
-*/
 
   def sortPar(parList: Par[List[Int]]): Par[List[Int]] =
     map2(parList, unit(()))((a, _) => a.sorted)
