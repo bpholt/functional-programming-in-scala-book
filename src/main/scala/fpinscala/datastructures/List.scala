@@ -93,7 +93,8 @@ object List {
     foldLeft(reverse(as), bs) { (l, e) => Cons(e, l) }
 
   def flatten[A](lists: List[List[A]]): List[A] =
-    foldLeft(lists, nil[A])(append)
+//    foldLeft(lists, nil[A])(append)
+    flatMap(lists)(identity)
 
   def mapPlus1(ints: List[Int]): List[Int] =
     foldRight(ints, nil[Int])((a, b) => Cons(a + 1, b))

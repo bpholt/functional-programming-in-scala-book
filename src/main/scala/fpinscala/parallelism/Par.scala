@@ -130,6 +130,94 @@ object Par {
     }
   }
 
+  def choice[A](cond: Par[Boolean])
+               (t: Par[A], f: Par[A]): Par[A] =
+    chooser(cond)(if (_) t else f)
+//    choiceN(map(cond) {
+//      case true => 0
+//      case false => 1
+//    })(List(t, f))
+//    es =>
+//      if (run(es)(cond)) t(es)
+//      else f(es)
+/*
+    choiceN(map(cond) {
+      case true => 0
+      case false => 1
+    })(List(t, f))
+*/
+
+  def choiceN[A](n: Par[Int])
+                (choices: List[Par[A]]): Par[A] =
+    chooser(n)(choices.apply)
+//  { es =>
+//    val x: Int = run(es)(n)
+//
+//    val pa: Par[A] = choices(x)
+//
+//    pa(es)
+//  }
+/*
+    es =>
+      choices(run(es)(n))(es)
+*/
+
+  def choiceMap[K, V](key: Par[K])
+                     (choices: Map[K, Par[V]]): Par[V] =
+    chooser(key)(choices.apply)
+
+  //  { es =>
+//    val x: K = run(es)(key)
+//
+//    val pv: Par[V] = choices(x)
+//
+//    pv(es)
+//  }
+/*
+    es =>
+      choices(run(es)(key))(es)
+*/
+
+  def chooser[A, B](pa: Par[A])
+                   (choices: A => Par[B]): Par[B] =
+//    join(map(pa)(choices))
+    flatMap(pa)(choices)
+/*
+    es =>
+      choices(run(es)(pa))(es)
+*/
+
+  def flatMap[A, B](a: Par[A])
+                   (f: A => Par[B]): Par[B] =
+    join(map(a)(f))
+//  { es =>
+//    f(run(es)(a))(es)
+//  }
+
+  /*
+      es =>
+        f(run(es)(a))(es)
+  */
+/*
+    join(map(a)(f))
+*/
+
+// A = Par[Z]
+// B = Z
+  // f = Par[Z] => Par[Z]
+  def join[Z](a: Par[Par[Z]]): Par[Z] = { es =>
+//      identity(run(es)(a))(es)
+      run(es)(a)(es)
+  }
+
+//    flatMap(a)(identity)
+/*
+    flatMap(a)(identity)
+*/
+/*
+    es =>
+      run(es)(a)(es)
+*/
 }
 
 object Tester extends App {
