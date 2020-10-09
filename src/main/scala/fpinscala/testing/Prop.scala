@@ -6,37 +6,9 @@ import fpinscala.state._
 
 case class Prop(run: (TestCases, RNG) => Result) {
   def &&(p: Prop): Prop = Prop { (n, rng) =>
-//    this.run(n, rng) match {
-//      case Passed => p.run(n, rng.nextInt._2)
-//      case f => f
-//    }
-
-
-    val s1 = State[RNG, Result] { r =>
-      val (_, nextRng) = r.nextInt
-
-      (this.run(n, r), nextRng)
-    }
-    val s2 = State[RNG, Result] { r =>
-      val (_, nextRng) = r.nextInt
-
-      (p.run(n, r), nextRng)
-    }
-
-    val (rs: List[Result], _) = State.sequence(List(s1, s2)).run(rng)
-
-//    val r1: Result = this.run(n, rng)
-//    val r2: Result = p.run(n, rng)
-
-    val r1 = rs.head
-    val r2 = rs(1)
-
-    (r1, r2) match {
-      case (Passed, Passed) => Passed
-      case (Passed, Falsified(f, s)) => Falsified(f, s + n)
-      case (Falsified(f, s), Passed) => Falsified(f, s + n)
-      case (Falsified(f1, s1), Falsified(f2, s2)) =>
-        Falsified(f1 + "\n" + f2, s1 + s2)
+    run(n, rng) match {
+      case Passed => p.run(n, rng)
+      case x => x
     }
   }
   def ||(p: Prop): Prop = ???

@@ -28,28 +28,17 @@ class PropSpec extends AnyFlatSpec with Matchers {
   it should "combine one passing value and one failed value into a Falsified" in {
     val expected: Prop = Prop.forAll(Gen.unit(true))(identity) && Prop.forAll(Gen.unit(false))(identity)
 
-    expected.run(1, initialState) should be(Falsified("false", 1))
+    expected.run(1, initialState) should be(Falsified("false", 0))
   }
 
   it should "combine one failed value and one passing value into a Falsified" in {
     val expected: Prop = Prop.forAll(Gen.unit(false))(identity) && Prop.forAll(Gen.unit(true))(identity)
 
-    expected.run(1, initialState) should be(Falsified("false", 1))
+    expected.run(1, initialState) should be(Falsified("false", 0))
   }
 
   it should "combine two failed values into a single Falsified" in {
     val expected: Prop = Prop.forAll(Gen.unit(false))(identity) && Prop.forAll(Gen.unit(false))(identity)
-    expected.run(1, initialState) should be(Falsified("false\nfalse", 0))
-  }
-
-  /*
-   * 48179997485145L will generate true for the first boolean pulled, with
-   * 128185544502587L as the next RNG state value. 128185544502587L will generate
-   * false, so if the RNG is threaded thru the two Props, then the left-hand side
-   * will be Passed and the right-hand side Falsified.
-   */
-  it should "thread the rng state thru" in {
-    val expected: Prop = Prop.forAll(Gen.boolean)(identity) && Prop.forAll(Gen.boolean)(identity)
-    expected.run(1, SimpleRNG(48179997485145L)) should be(Falsified("false", 1))
+    expected.run(1, initialState) should be(Falsified("false", 0))
   }
 }

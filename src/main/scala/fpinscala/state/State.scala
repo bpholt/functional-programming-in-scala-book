@@ -145,7 +145,6 @@ case class SimpleRNG(seed: Long) extends RNG {
     val newSeed = (seed * 0x5DEECE66DL + 0xBL) & 0xFFFFFFFFFFFFL
     val nextRNG = SimpleRNG(newSeed)
     val n = (newSeed >>> 16).toInt
-    println(s"$seed -> $newSeed")
     (n, nextRNG)
   }
 }
