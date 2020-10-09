@@ -4,26 +4,86 @@ import Prop._
 import fpinscala.state.RNG.{map, nonNegativeLessThan}
 import fpinscala.state._
 
-trait Prop { self =>
-  def check(): Either[(FailedCase, SuccessCount), SuccessCount]
+case class Prop(run: (TestCases, RNG) => Result) {
+  def &&(p: Prop): Prop = Prop { (n, rng) =>
+//    this.run(n, rng) match {
+//      case Passed => p.run(n, rng.nextInt._2)
+//      case f => f
+//    }
 
-  def &&(p: Prop): Prop = new Prop {
-    override def check(): Either[(FailedCase, SuccessCount), SuccessCount] =
-      self.check().flatMap { selfSuccess =>
-        p.check() match {
-          case Right(sc) => Right(selfSuccess + sc)
-          case Left((fc, sc)) => Left((fc, selfSuccess + sc))
-        }
-      }
+
+    val s1 = State[RNG, Result] { r =>
+      val (_, nextRng) = r.nextInt
+
+      (this.run(n, r), nextRng)
+    }
+    val s2 = State[RNG, Result] { r =>
+      val (_, nextRng) = r.nextInt
+
+      (p.run(n, r), nextRng)
+    }
+
+    val (rs: List[Result], _) = State.sequence(List(s1, s2)).run(rng)
+
+//    val r1: Result = this.run(n, rng)
+//    val r2: Result = p.run(n, rng)
+
+    val r1 = rs.head
+    val r2 = rs(1)
+
+    (r1, r2) match {
+      case (Passed, Passed) => Passed
+      case (Passed, Falsified(f, s)) => Falsified(f, s + n)
+      case (Falsified(f, s), Passed) => Falsified(f, s + n)
+      case (Falsified(f1, s1), Falsified(f2, s2)) =>
+        Falsified(f1 + "\n" + f2, s1 + s2)
+    }
   }
+  def ||(p: Prop): Prop = ???
 }
 
 object Prop {
   type FailedCase = String
   type SuccessCount = Int
+  type TestCases = Int
 
-  def forAll[A](a: Gen[A])
-               (f: A => Boolean): Prop = ???
+  def forAll[A](as: Gen[A])
+               (f: A => Boolean): Prop = Prop { (n, rng) =>
+    randomStream(as)(rng)
+      .zip(LazyList.from(0))
+      .take(n)
+      .map {
+        case (a, i) =>
+          try {
+            if (f(a)) Passed else Falsified(a.toString, i)
+          } catch {
+            case e: Exception => Falsified(buildMsg(a, e), i)
+          }
+      }
+      .find(_.isFalsified)
+      .getOrElse(Passed)
+  }
+
+  def randomStream[A](g: Gen[A])
+                     (rng: RNG): LazyList[A] =
+    LazyList.unfold(rng) { rng =>
+      Some(g.sample.run(rng))
+    }
+
+  def buildMsg[A](s: A, e: Exception): String =
+    s"test case: $s\n" +
+      s"generated an exception: ${e.getMessage}\n" + s"stack trace:\n ${e.getStackTrace.mkString("\n")}"
+}
+
+sealed trait Result extends Product with Serializable {
+  def isFalsified: Boolean
+}
+case object Passed extends Result {
+  def isFalsified = false
+}
+case class Falsified(failure: FailedCase,
+                     successes: SuccessCount) extends Result {
+  def isFalsified = true
 }
 
 case class Gen[A](sample: State[RNG, A]) {
@@ -113,19 +173,19 @@ object PropApp extends App {
 //
 //  println((p1 && p2).check())
 
-  println(Gen.listOfN(10, Gen.boolean).sample.run(SimpleRNG(5L)))
+//  println(Gen.listOfN(10, Gen.boolean).sample.run(SimpleRNG(5L)))
 
-  println(Gen.boolean.sample.run(SimpleRNG(5L)))
-  println(Gen.boolean.sample.run(SimpleRNG(126074519596L)))
-  println(Gen.boolean.sample.run(SimpleRNG(54580536946886L)))
+//  println(Gen.boolean.sample.run(SimpleRNG(5L)))
+//  println(Gen.boolean.sample.run(SimpleRNG(126074519596L)))
+//  println(Gen.boolean.sample.run(SimpleRNG(54580536946886L)))
   println(Gen.boolean.sample.run(SimpleRNG(48179997485145L)))
   println(Gen.boolean.sample.run(SimpleRNG(128185544502587L)))
-  println(Gen.boolean.sample.run(SimpleRNG(50918106956842L)))
-  println(Gen.boolean.sample.run(SimpleRNG(93306604150977L)))
-  println(Gen.boolean.sample.run(SimpleRNG(11020690987064L)))
-  println(Gen.boolean.sample.run(SimpleRNG(54766004951253L)))
-  println(Gen.boolean.sample.run(SimpleRNG(120186769387708L)))
+//  println(Gen.boolean.sample.run(SimpleRNG(50918106956842L)))
+//  println(Gen.boolean.sample.run(SimpleRNG(93306604150977L)))
+//  println(Gen.boolean.sample.run(SimpleRNG(11020690987064L)))
+//  println(Gen.boolean.sample.run(SimpleRNG(54766004951253L)))
+//  println(Gen.boolean.sample.run(SimpleRNG(120186769387708L)))
 
-  println(Gen.boolean.listOfN(Gen.unit(10)).sample.run(SimpleRNG(5L)))
+//  println(Gen.boolean.listOfN(Gen.unit(10)).sample.run(SimpleRNG(5L)))
 
 }
