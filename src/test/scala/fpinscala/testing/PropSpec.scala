@@ -41,4 +41,38 @@ class PropSpec extends AnyFlatSpec with Matchers {
     val expected: Prop = Prop.forAll(Gen.unit(false))(identity) && Prop.forAll(Gen.unit(false))(identity)
     expected.run(1, initialState) should be(Falsified("false", 0))
   }
+
+  behavior of "Prop ||"
+
+  it should "combine two passing values into a single Passed" in {
+    val expected: Prop = Prop.forAll(Gen.unit(true))(identity) || Prop.forAll(Gen.unit(true))(identity)
+
+    expected.run(1, initialState) should be(Passed)
+  }
+
+  it should "combine one passing value and one failed value into a Passed" in {
+    val expected: Prop = Prop.forAll(Gen.unit(true))(identity) || Prop.forAll(Gen.unit(false))(identity)
+
+    expected.run(1, initialState) should be(Passed)
+  }
+
+  it should "combine one failed value and one passing value into a Passed" in {
+    val expected: Prop = Prop.forAll(Gen.unit(false))(identity) || Prop.forAll(Gen.unit(true))(identity)
+
+    expected.run(1, initialState) should be(Passed)
+  }
+
+  it should "combine two failed values into a single Falsified" in {
+    val expected: Prop = Prop.forAll(Gen.unit(false))(identity) || Prop.forAll(Gen.unit(false))(identity)
+    expected.run(1, initialState) should be(Falsified("false", 0))
+  }
+
+  behavior of "SGen.listOf"
+
+  it should "be the equivalent of Gen.listOfN, given the same list sizes" in {
+    val static: Gen[List[Boolean]] = Gen.listOfN(10, Gen.boolean)
+    val sGen: SGen[List[Boolean]] = SGen.listOf(Gen.boolean)
+
+    static.sample.run(initialState) should be(sGen.forSize(10).sample.run(initialState))
+  }
 }
