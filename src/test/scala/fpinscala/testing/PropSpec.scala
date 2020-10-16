@@ -22,24 +22,24 @@ class PropSpec extends AnyFlatSpec with Matchers {
   it should "combine two passing values into a single Passed" in {
     val expected: Prop = Prop.forAll(Gen.unit(true))(identity) && Prop.forAll(Gen.unit(true))(identity)
 
-    expected.run(1, initialState) should be(Passed)
+    expected.run(1, 1, initialState) should be(Passed)
   }
 
   it should "combine one passing value and one failed value into a Falsified" in {
     val expected: Prop = Prop.forAll(Gen.unit(true))(identity) && Prop.forAll(Gen.unit(false))(identity)
 
-    expected.run(1, initialState) should be(Falsified("false", 0))
+    expected.run(1, 1, initialState) should be(Falsified("false", 0))
   }
 
   it should "combine one failed value and one passing value into a Falsified" in {
     val expected: Prop = Prop.forAll(Gen.unit(false))(identity) && Prop.forAll(Gen.unit(true))(identity)
 
-    expected.run(1, initialState) should be(Falsified("false", 0))
+    expected.run(1, 1, initialState) should be(Falsified("false", 0))
   }
 
   it should "combine two failed values into a single Falsified" in {
     val expected: Prop = Prop.forAll(Gen.unit(false))(identity) && Prop.forAll(Gen.unit(false))(identity)
-    expected.run(1, initialState) should be(Falsified("false", 0))
+    expected.run(1, 1, initialState) should be(Falsified("false", 0))
   }
 
   behavior of "Prop ||"
@@ -47,24 +47,24 @@ class PropSpec extends AnyFlatSpec with Matchers {
   it should "combine two passing values into a single Passed" in {
     val expected: Prop = Prop.forAll(Gen.unit(true))(identity) || Prop.forAll(Gen.unit(true))(identity)
 
-    expected.run(1, initialState) should be(Passed)
+    expected.run(1, 1, initialState) should be(Passed)
   }
 
   it should "combine one passing value and one failed value into a Passed" in {
     val expected: Prop = Prop.forAll(Gen.unit(true))(identity) || Prop.forAll(Gen.unit(false))(identity)
 
-    expected.run(1, initialState) should be(Passed)
+    expected.run(1, 1, initialState) should be(Passed)
   }
 
   it should "combine one failed value and one passing value into a Passed" in {
     val expected: Prop = Prop.forAll(Gen.unit(false))(identity) || Prop.forAll(Gen.unit(true))(identity)
 
-    expected.run(1, initialState) should be(Passed)
+    expected.run(1, 1, initialState) should be(Passed)
   }
 
   it should "combine two failed values into a single Falsified" in {
     val expected: Prop = Prop.forAll(Gen.unit(false))(identity) || Prop.forAll(Gen.unit(false))(identity)
-    expected.run(1, initialState) should be(Falsified("false", 0))
+    expected.run(1, 1, initialState) should be(Falsified("false", 0))
   }
 
   behavior of "SGen.listOf"
@@ -74,5 +74,17 @@ class PropSpec extends AnyFlatSpec with Matchers {
     val sGen: SGen[List[Boolean]] = SGen.listOf(Gen.boolean)
 
     static.sample.run(initialState) should be(sGen.forSize(10).sample.run(initialState))
+  }
+
+  behavior of "example test"
+
+  it should "do the thing" in {
+    val smallInt = Gen.choose(-10,10)
+    val maxProp: Prop = Prop.forAll(SGen.listOf(smallInt)) { ns =>
+      val max = ns.max
+      !ns.exists(_ > max)
+    }
+
+    Prop.runForScalaTest(maxProp) should be(Passed)
   }
 }

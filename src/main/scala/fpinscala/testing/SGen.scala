@@ -1,14 +1,13 @@
 package fpinscala.testing
 
 case class SGen[A](forSize: Int => Gen[A]) {
+  def apply(i: Int): Gen[A] = forSize(i)
+
   def map[B](f: A => B): SGen[B] = SGen { i =>
     val ga: Gen[A] = forSize(i)
 
     ga.map(f)
   }
-/*
-    SGen(i => forSize(i).map(f))
-*/
 
   def flatMap[B](f: A => SGen[B]): SGen[B] =
 // book answer key version

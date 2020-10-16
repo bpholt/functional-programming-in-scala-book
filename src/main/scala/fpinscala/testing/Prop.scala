@@ -3,36 +3,46 @@ package fpinscala.testing
 import fpinscala.state._
 import fpinscala.testing.Prop._
 
-case class Prop(run: (TestCases, RNG) => Result) {
-  def &&(p: Prop): Prop = Prop { (n, rng) =>
-    run(n, rng) match {
-      case Passed => p.run(n, rng)
+case class Prop(run: (MaxSize, TestCases, RNG) => Result) {
+  def &&(p: Prop): Prop = Prop { (m, n, rng) =>
+    run(m, n, rng) match {
+      case Passed => p.run(m, n, rng)
       case x@Falsified(_, _) => x
     }
   }
-  def ||(p: Prop): Prop = Prop { (n, rng) =>
-    run(n, rng) match {
+  def ||(p: Prop): Prop = Prop { (m, n, rng) =>
+    run(m, n, rng) match {
       case Passed => Passed
-      case Falsified(_, _) => p.run(n, rng)
+      case Falsified(_, _) => p.run(m, n, rng)
     }
   }
-/*
-    Prop { (n, rng) =>
-      run(n, rng) match {
-        case Passed => Passed
-        case _ => p.run(n, rng)
-      }
-    }
-*/
 }
 
 object Prop {
   type FailedCase = String
   type SuccessCount = Int
   type TestCases = Int
+  type MaxSize = Int
+
+  def run(p: Prop,
+         maxSize: MaxSize = 100,
+         testCases: TestCases = 100,
+         rng: RNG = SimpleRNG(System.currentTimeMillis())): Unit =
+    runForScalaTest(p, maxSize, testCases, rng) match {
+      case Falsified(msg, n) =>
+        println(s"! Falsified after $n passed tests:\n $msg")
+      case Passed =>
+        println(s"+ OK, passed $testCases tests.")
+    }
+
+  def runForScalaTest(p: Prop,
+         maxSize: MaxSize = 100,
+         testCases: TestCases = 100,
+         rng: RNG = SimpleRNG(System.currentTimeMillis())): Result =
+    p.run(maxSize, testCases, rng)
 
   def forAll[A](as: Gen[A])
-               (f: A => Boolean): Prop = Prop { (n, rng) =>
+               (f: A => Boolean): Prop = Prop { (_, n, rng) =>
     randomStream(as)(rng)
       .zip(LazyList.from(0))
       .take(n)
@@ -46,6 +56,34 @@ object Prop {
       }
       .find(_.isFalsified)
       .getOrElse(Passed)
+  }
+
+  def forAll[A](g: SGen[A])
+               (f: A => Boolean): Prop =
+    forAll(g.forSize(_))(f)
+
+  def forAll[A](g: Int => Gen[A])
+               (f: A => Boolean): Prop = Prop {
+    (max, n, rng) =>
+      // for each size, generate `casesPerSize` random cases
+      val casesPerSize = (n + (max - 1)) / max
+
+      // make one prop per size, but no more than n props
+      val props: LazyList[Prop] =
+        LazyList.from(0).take((n min max) + 1).map(i => forAll(g(i))(f))
+
+      // combine them all into one Prop (overriding n with casesPerSize as we go)
+      val prop: Prop =
+        props
+          .map { p =>
+            Prop { (max, _, rng) =>
+              p.run(max, casesPerSize, rng)
+            }
+          }
+          .toList
+          .reduce(_ && _)
+
+      prop.run(max, n, rng)
   }
 
   def randomStream[A](g: Gen[A])
