@@ -36,7 +36,14 @@ case class SGen[A](forSize: Int => Gen[A]) {
 object SGen {
   def listOf[A](g: Gen[A]): SGen[List[A]] =
     SGen(Gen.listOfN(_, g))
-/*
-    SGen(i => g.listOfN(Gen.unit(i)))
-*/
+
+  def listOf1[A](g: Gen[A]) = nonEmptyList(g)
+  def nonEmptyList[A](g: Gen[A]): SGen[List[A]] =
+//    SGen(n => Gen.listOfN(n max 1, g))
+    SGen { n =>
+      for {
+        a <- g
+        as <- Gen.listOfN(n, g)
+      } yield a :: as
+    }
 }

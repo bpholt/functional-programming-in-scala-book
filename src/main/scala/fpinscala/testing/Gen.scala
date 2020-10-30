@@ -3,6 +3,8 @@ package fpinscala.testing
 import fpinscala.state.RNG._
 import fpinscala.state._
 
+//case class Gen[+A](sample: State[RNG,A]) {
+
 case class Gen[A](sample: State[RNG, A]) {
   def unsized: SGen[A] =
     SGen(_ => this)
@@ -49,8 +51,11 @@ case class Gen[A](sample: State[RNG, A]) {
 }
 
 object Gen {
+//  def choose(start: Int, stopExclusive: Int): Gen[Int] =
+//    Gen(map(nonNegativeLessThan(stopExclusive - start))(_ + start))
+
   def choose(start: Int, stopExclusive: Int): Gen[Int] =
-    Gen(map(nonNegativeLessThan(stopExclusive - start))(_ + start))
+    Gen(RNG.nonNegativeInt.map(n => (start.toLong + n.toLong % (stopExclusive.toLong - start.toLong)).toInt))
 
   def unit[A](a: => A): Gen[A] =
     Gen(State.unit(a))
