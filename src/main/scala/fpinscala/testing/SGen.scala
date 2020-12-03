@@ -1,5 +1,8 @@
 package fpinscala.testing
 
+import fpinscala.parallelism.Par._
+import fpinscala.state.{RNG, State}
+
 case class SGen[A](forSize: Int => Gen[A]) {
   def apply(i: Int): Gen[A] = forSize(i)
 
@@ -31,6 +34,15 @@ case class SGen[A](forSize: Int => Gen[A]) {
         forSize(i).flatMap(f(_).forSize(i))
       }
   */
+  def map2[B, C](g: SGen[B])
+                (f: (A, B) => C): SGen[C] =
+    for {
+      a <- this
+      b <- g
+    } yield f(a, b)
+
+  def **[B](g: SGen[B]): SGen[(A,B)] =
+    (this map2 g)((_,_))
 }
 
 object SGen {
@@ -46,4 +58,22 @@ object SGen {
         as <- Gen.listOfN(n, g)
       } yield a :: as
     }
+
+  val parInt: SGen[Par[Int]] = SGen {
+    case 0 => Gen.choose(0, 20).map(i => unit(i))
+    case i: Int =>
+      val value: Gen[Par[Int]] = parInt.forSize(i - 1)
+
+//      val x: State[RNG, Par[Int]] =
+//        for {
+//          r <- State.get
+//          v <- value.sample
+//        } yield {
+//          println(r)
+//          v
+//        }
+
+      /*Gen(x)*/
+      value.map(fork(_))
+  }
 }

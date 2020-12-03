@@ -1,5 +1,7 @@
 package fpinscala.testing
 
+import fpinscala.parallelism.Par
+import fpinscala.parallelism.Par.Par
 import fpinscala.state.RNG._
 import fpinscala.state._
 
@@ -48,6 +50,16 @@ case class Gen[A](sample: State[RNG, A]) {
         }
       }
   */
+
+  def map2[B, C](g: Gen[B])
+                (f: (A, B) => C): Gen[C] =
+    for {
+      a <- this
+      b <- g
+    } yield f(a, b)
+
+  def **[B](g: Gen[B]): Gen[(A, B)] =
+    (this map2 g) ((_, _))
 }
 
 object Gen {
@@ -63,6 +75,9 @@ object Gen {
   def boolean: Gen[Boolean] = Gen {
     map(nonNegativeLessThan(2))(_ == 0)
   }
+
+  def listOf[A](g: Gen[A]): SGen[List[A]] =
+    SGen(n => g.listOfN(unit(n)))
 
   def listOfN[A](n: Int, g: Gen[A]): Gen[List[A]] = Gen {
     State.sequence(List.fill(n)(g.sample))
@@ -93,4 +108,32 @@ object Gen {
 
       if (g1Weight < d) g1._1 else g2._1
     }
+
+  val S: Gen[java.util.concurrent.ExecutorService] =
+    weighted(
+      choose(1, 4).map(java.util.concurrent.Executors.newFixedThreadPool) -> .75,
+      unit(java.util.concurrent.Executors.newCachedThreadPool) -> .25
+    )
+
+  val int = Gen.choose(Int.MinValue, Int.MaxValue)
+
+  /* A `Gen[Par[Int]]` generated from a list summation that spawns a new parallel
+ * computation for each element of the input list summed to produce the final
+ * result. This is not the most compelling example, but it provides at least some
+ * variation in structure to use for testing.
+ *
+ * Note that this has to be a `lazy val` because of the way Scala initializes objects.
+ * It depends on the `Prop` companion object being created, which references `pint2`.
+ */
+  lazy val pint2: Gen[Par[Int]] =
+    choose(-100, 100)
+      .listOfN(choose(0, 20))
+      .map { l =>
+        l.foldLeft(Par.unit(0)) { (p, i) =>
+          Par.fork {
+            Par.map2(p, Par.unit(i))(_ + _)
+          }
+        }
+      }
+
 }

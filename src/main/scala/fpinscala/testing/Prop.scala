@@ -24,6 +24,11 @@ object Prop {
   type TestCases = Int
   type MaxSize = Int
 
+  def check(p: => Boolean): Prop = Prop { (_, _, _) =>
+    if (p) Passed
+    else Falsified("()", 0)
+  }
+
   def run(p: Prop,
          maxSize: MaxSize = 100,
          testCases: TestCases = 100,
