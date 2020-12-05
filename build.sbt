@@ -5,10 +5,17 @@ version := "0.1"
 scalaVersion := "2.13.3"
 
 libraryDependencies ++= {
+  val scalaTestV = "3.2.3"
+  val refinedV = "0.9.19"
   Seq(
-    "org.typelevel" %% "cats-core" % "2.2.0-RC2",
+    "org.typelevel" %% "cats-core" % "2.2.0",
     "com.chuusai" %% "shapeless" % "2.3.3",
-    "org.scalatest" %% "scalatest" % "3.1.0" % Test,
+    "org.scalatest" %% "scalatest-flatspec" % scalaTestV % Test,
+    "org.scalatest" %% "scalatest-shouldmatchers" % scalaTestV % Test,
+    "org.scalatestplus" %% "scalacheck-1-15" % "3.2.3.0" % Test,
+    "eu.timepit" %% "refined" % refinedV % Test,
+    "eu.timepit" %% "refined-scalacheck" % refinedV % Test,
+    "eu.timepit" %% "refined-cats" % refinedV % Test,
   )
 }
 
